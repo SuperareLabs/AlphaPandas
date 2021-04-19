@@ -2,7 +2,7 @@
 # @Author: User
 # @Date:   2021-04-16 11:05:13
 # @Last Modified by:   fyr91
-# @Last Modified time: 2021-04-16 18:45:21
+# @Last Modified time: 2021-04-19 18:51:04
 import cv2
 import os
 from os import path as osp
@@ -60,8 +60,11 @@ def get_top_left_coord(base, img,  offset_x = -4, offset_y = 0):
     h1,w1,_ = base.shape
     h2,w2,_ = img.shape
 
-    x = (w1-w2)/2 + offset_x
-    y = 240 + offset_y
+    x = 0
+    y = 0
+
+    x += (w1-w2)/2 + offset_x
+    y += offset_y
 
     return int(x), int(y)
 
@@ -71,30 +74,33 @@ def render_tile(img_list):
 
 offset_dict = {
     "pd_01": {
-        "hair": [-4, -100],
-        "glasses": [-4, -10],
-        "hat": [-4, -130],
+        "hair": [-4, 176],
+        "glasses": [-4, 224],
+        "hat": [-4, 80],
     },
     "pd_02": {
-        "hair": [-4, -150],
-        "glasses": [-4, -40],
-        "hat": [-4, -170],
+        "hair": [-4, 138],
+        "glasses": [-4, 192],
+        "hat": [-4, 32],
     },
     "pd_03": {
-        "hair": [12, 0],
-        "glasses": [12, 86],
-        "hat": [12, -26],
+        "hair": [-4, 272],
+        "glasses": [-4, 320],
+        "hat": [-4, 176],
     },
     "pd_04": {
-        "hair": [12, -190],
-        "glasses": [12, -90],
-        "hat": [12, -210],
+        "hair": [-4, 82],
+        "glasses": [-4, 144],
+        "hat": [-4, 0],
     },
 
 }
 
+# BG_COLOR = [(255,255,255)]
 BG_COLOR = [(155, 93, 229), (241, 91, 181), (254, 228, 64), (0, 187, 249), (0, 245, 212)]
-
+HAT_PROB = 0.5
+HAIR_PROB = 0
+GLASSES_PROB = 0.2
 # BG_COLOR = [(237, 220, 210), (255, 241, 230), (253, 226, 228), (250, 210, 225), (197, 222, 221),
 #             (219, 231, 228), (240, 239, 235), (214, 226, 233), (188, 212, 230), (153, 193, 222)]
 
@@ -103,14 +109,15 @@ if __name__ == '__main__':
     # show_assets_dim(GLASSES_DIR)
     existing_designs = []
 
-    hairs = os.listdir(HAIR_DIR)
-    hats = os.listdir(HAT_DIR)
-    glasses = os.listdir(GLASSES_DIR)
+    _,_,hairs = next(os.walk(HAIR_DIR))
+    _,_,hats = next(os.walk(HAT_DIR))
+    _,_,glasses = next(os.walk(GLASSES_DIR))
 
-    rows = 14
-    cols = 14
-    unit_size = (200,200)
+    rows = 15
+    cols = 30
+    unit_size = (120,120)
     generated_imgs = []
+
 
     while len(generated_imgs) < rows*cols:
 
@@ -119,21 +126,36 @@ if __name__ == '__main__':
         base = cv2.cvtColor(base, cv2.COLOR_RGB2BGR)
 
         base_name = random.choice(['pd_01','pd_02','pd_03','pd_04'])
-        body = cv2.imread(f'../assets/base/{base_name}_trans.png', -1)
 
+        base_color_prob = random.random()
+        if base_color_prob > 0 and base_color_prob <= 0.1:
+            base_color = 'blue'
+        elif base_color_prob <= 0.2:
+            base_color = 'red'
+        elif base_color_prob <= 0.3:
+            base_color = 'green'
+        elif base_color_prob <= 0.4:
+            base_color = 'purple'
+        elif base_color_prob <= 0.5:
+            base_color = 'brown'
+        else:
+            base_color = 'black'
+
+
+        body = cv2.imread(f'../assets/base/{base_name}/{base_color}.png', -1)
         base = overlay_transparent(base, body, 0, 0)
 
         design = []
 
         # determine accessories
-        got_hair = random.random()>0.5
-        got_hat = random.random()>0.5
-        got_glasses = random.random()>0.5
+        # got_hair = random.random()<HAIR_PROB
+        got_hat = random.random()<HAT_PROB
+        got_glasses = random.random()<GLASSES_PROB
 
-        if got_hair:
-            hair_file = random.choice(hairs)
-        else:
-            hair_file = ''
+        # if got_hair:
+        #     hair_file = random.choice(hairs)
+        # else:
+        #     hair_file = ''
 
         if got_hat:
             hat_file = random.choice(hats)
@@ -145,24 +167,26 @@ if __name__ == '__main__':
         else:
             glasses_file = ''
 
-        design.append(hair_file)
+        # design.append(hair_file)
         design.append(hat_file)
         design.append(glasses_file)
 
         # check design existance
-        design_str = ",".join(design)+f"-{base_name}"
-        if (design_str in existing_designs) or design_str == ',,':
+        design_str = ",".join(design)+f",{base_name}-{base_color}"
+        if (design_str in existing_designs):
             # print('existed - pass')
+            # print('skipped a duplate')
             continue
         else:
-            print(design_str)
+            # print(design_str)
             existing_designs.append(design_str)
+            print(f'generated {len(existing_designs)}/{rows*cols} unique designs', end="\r", flush=True)
 
-        if got_hair:
-            hair_path = osp.join(HAIR_DIR, hair_file)
-            accessory = cv2.imread(hair_path, -1)
-            x, y = get_top_left_coord(base, accessory, offset_dict[base_name]["hair"][0], offset_dict[base_name]["hair"][1])
-            base = overlay_transparent(base, accessory, x, y)
+        # if got_hair:
+        #     hair_path = osp.join(HAIR_DIR, hair_file)
+        #     accessory = cv2.imread(hair_path, -1)
+        #     x, y = get_top_left_coord(base, accessory, offset_dict[base_name]["hair"][0], offset_dict[base_name]["hair"][1])
+        #     base = overlay_transparent(base, accessory, x, y)
 
         if got_hat:
             hat_path = osp.join(HAT_DIR, hat_file)
