@@ -2,215 +2,128 @@
 # @Author: User
 # @Date:   2021-04-16 11:05:13
 # @Last Modified by:   fyr91
-# @Last Modified time: 2021-04-19 18:51:04
+# @Last Modified time: 2021-04-20 11:32:59
 import cv2
+from PIL import Image
 import os
 from os import path as osp
 import numpy as np
 import random
-import itertools
-import time
-
-BASE_DIR = '../assets/base/'
-HAT_DIR = '../assets/hat/'
-HAIR_DIR = '../assets/hair/'
-GLASSES_DIR = '../assets/glasses/'
-
-def show_assets_dim(base):
-    for file in os.listdir(base):
-        img = cv2.imread(osp.join(base, file))
-        print(img.shape)
-
-def overlay_transparent(base, accessory, x, y):
-    """
-    @brief      Overlays a transparant PNG onto another image using CV2
-
-    @param      base    The background image
-    @param      accessory  The transparent image to overlay (has alpha channel)
-    @param      x                 x location to place the top-left corner of our overlay
-    @param      y                 y location to place the top-left corner of our overlay
-
-    @return     Background image with overlay on top
-    """
-
-    bg_img = base.copy()
-
-    # Extract the alpha mask of the RGBA image, convert to RGB
-    b,g,r,a = cv2.split(accessory)
-    overlay_color = cv2.merge((b,g,r))
-
-    # Apply some simple filtering to remove edge noise
-    mask = cv2.medianBlur(a,5)
-
-    h, w, _ = overlay_color.shape
-    roi = bg_img[y:y+h, x:x+w]
-
-    # Black-out the area behind the logo in our original ROI
-    img1_bg = cv2.bitwise_and(roi.copy(),roi.copy(),mask = cv2.bitwise_not(mask))
-
-    # Mask out the logo from the logo image.
-    img2_fg = cv2.bitwise_and(overlay_color,overlay_color,mask = mask)
-
-    # Update the original image with our new ROI
-    bg_img[y:y+h, x:x+w] = cv2.add(img1_bg, img2_fg)
-
-    return bg_img
-
-def get_top_left_coord(base, img,  offset_x = -4, offset_y = 0):
-    h1,w1,_ = base.shape
-    h2,w2,_ = img.shape
-
-    x = 0
-    y = 0
-
-    x += (w1-w2)/2 + offset_x
-    y += offset_y
-
-    return int(x), int(y)
-
-
-def render_tile(img_list):
-    return cv2.vconcat([cv2.hconcat(img_list_h) for img_list_h in img_list])
-
-offset_dict = {
-    "pd_01": {
-        "hair": [-4, 176],
-        "glasses": [-4, 224],
-        "hat": [-4, 80],
-    },
-    "pd_02": {
-        "hair": [-4, 138],
-        "glasses": [-4, 192],
-        "hat": [-4, 32],
-    },
-    "pd_03": {
-        "hair": [-4, 272],
-        "glasses": [-4, 320],
-        "hat": [-4, 176],
-    },
-    "pd_04": {
-        "hair": [-4, 82],
-        "glasses": [-4, 144],
-        "hat": [-4, 0],
-    },
-
-}
-
-# BG_COLOR = [(255,255,255)]
-BG_COLOR = [(155, 93, 229), (241, 91, 181), (254, 228, 64), (0, 187, 249), (0, 245, 212)]
-HAT_PROB = 0.5
-HAIR_PROB = 0
-GLASSES_PROB = 0.2
-# BG_COLOR = [(237, 220, 210), (255, 241, 230), (253, 226, 228), (250, 210, 225), (197, 222, 221),
-#             (219, 231, 228), (240, 239, 235), (214, 226, 233), (188, 212, 230), (153, 193, 222)]
-
+from render_utils import *
 
 if __name__ == '__main__':
-    # show_assets_dim(GLASSES_DIR)
+    from config import *
+
     existing_designs = []
 
-    _,_,hairs = next(os.walk(HAIR_DIR))
-    _,_,hats = next(os.walk(HAT_DIR))
+    _,_,tops = next(os.walk(TOP_DIR))
     _,_,glasses = next(os.walk(GLASSES_DIR))
+
+    normal_tops, rare_tops = split_nr(tops)
+    normal_glasses, rare_glasses = split_nr(glasses)
 
     rows = 15
     cols = 30
     unit_size = (120,120)
     generated_imgs = []
 
-
     while len(generated_imgs) < rows*cols:
 
-        base = np.zeros((600,600,3), np.uint8)
-        base[:]=random.choice(BG_COLOR)
-        base = cv2.cvtColor(base, cv2.COLOR_RGB2BGR)
+        # create empty final render
+        render = Image.new('RGB', (600,600))
 
-        base_name = random.choice(['pd_01','pd_02','pd_03','pd_04'])
 
-        base_color_prob = random.random()
-        if base_color_prob > 0 and base_color_prob <= 0.1:
-            base_color = 'blue'
-        elif base_color_prob <= 0.2:
-            base_color = 'red'
-        elif base_color_prob <= 0.3:
-            base_color = 'green'
-        elif base_color_prob <= 0.4:
-            base_color = 'purple'
-        elif base_color_prob <= 0.5:
-            base_color = 'brown'
+        # select bg and render
+        bg_color = random.choice(BG_COLORS)
+        bg = Image.new('RGB', (600, 600), bg_color)
+        render.paste(bg, (0,0))
+
+
+        # select body type & color
+        body_type = random.choice(BODY_TYPES)
+        body_color_prob = random.random()
+        if body_color_prob > 0 and body_color_prob <= 0.1:
+            body_color = 'blue'
+        elif body_color_prob <= 0.2:
+            body_color = 'red'
+        elif body_color_prob <= 0.3:
+            body_color = 'green'
+        elif body_color_prob <= 0.4:
+            body_color = 'purple'
+        elif body_color_prob <= 0.5:
+            body_color = 'brown'
         else:
-            base_color = 'black'
+            body_color = 'black'
 
 
-        body = cv2.imread(f'../assets/base/{base_name}/{base_color}.png', -1)
-        base = overlay_transparent(base, body, 0, 0)
+        # render selected body with bg
+        body = Image.open(f'../assets/base/{body_type}/{body_color}.png')
+        render.paste(body, (0,0), body)
 
-        design = []
 
         # determine accessories
-        # got_hair = random.random()<HAIR_PROB
-        got_hat = random.random()<HAT_PROB
+        got_top = random.random()<TOP_PROB
         got_glasses = random.random()<GLASSES_PROB
 
-        # if got_hair:
-        #     hair_file = random.choice(hairs)
-        # else:
-        #     hair_file = ''
-
-        if got_hat:
-            hat_file = random.choice(hats)
+        if got_top:
+            if random.random() < RARE_PROB:
+                top_file = random.choice(rare_tops)
+            else:
+                top_file = random.choice(normal_tops)
         else:
-            hat_file = ''
+            top_file = ''
 
         if got_glasses:
-            glasses_file = random.choice(glasses)
+            if random.random() < RARE_PROB:
+                glasses_file = random.choice(rare_glasses)
+            else:
+                glasses_file = random.choice(normal_glasses)
         else:
             glasses_file = ''
 
-        # design.append(hair_file)
-        design.append(hat_file)
-        design.append(glasses_file)
 
         # check design existance
-        design_str = ",".join(design)+f",{base_name}-{base_color}"
+        design = []
+        design.append(top_file)
+        design.append(glasses_file)
+        design_str = ",".join(design)+f",{body_type},{body_color}"
         if (design_str in existing_designs):
-            # print('existed - pass')
-            # print('skipped a duplate')
             continue
         else:
-            # print(design_str)
             existing_designs.append(design_str)
             print(f'generated {len(existing_designs)}/{rows*cols} unique designs', end="\r", flush=True)
 
-        # if got_hair:
-        #     hair_path = osp.join(HAIR_DIR, hair_file)
-        #     accessory = cv2.imread(hair_path, -1)
-        #     x, y = get_top_left_coord(base, accessory, offset_dict[base_name]["hair"][0], offset_dict[base_name]["hair"][1])
-        #     base = overlay_transparent(base, accessory, x, y)
 
-        if got_hat:
-            hat_path = osp.join(HAT_DIR, hat_file)
-            accessory = cv2.imread(hat_path, -1)
-            x, y = get_top_left_coord(base, accessory, offset_dict[base_name]["hat"][0], offset_dict[base_name]["hat"][1])
-            base = overlay_transparent(base, accessory, x, y)
-
+        # render selected accessories
+        if got_top:
+            top_path = osp.join(TOP_DIR, top_file)
+            accessory = Image.open(top_path)
+            x, y = get_top_left_coord(render, accessory, OFFSET[body_type]["top"][0], OFFSET[body_type]["top"][1])
+            render.paste(accessory, (x,y), accessory)
         if got_glasses:
             glasses_path = osp.join(GLASSES_DIR, glasses_file)
-            accessory = cv2.imread(glasses_path, -1)
-            x, y = get_top_left_coord(base, accessory, offset_dict[base_name]["glasses"][0],  offset_dict[base_name]["glasses"][1])
-            base = overlay_transparent(base, accessory, x, y)
+            accessory = Image.open(glasses_path)
+            x, y = get_top_left_coord(render, accessory, OFFSET[body_type]["glasses"][0],  OFFSET[body_type]["glasses"][1])
+            render.paste(accessory, (x,y), accessory)
 
-        base = cv2.resize(base, unit_size)
-        generated_imgs.append(base)
 
+        # cvt to cv2 and resize
+        cv2_img = np.array(render)
+        cv2_img = cv2_img[:, :, ::-1].copy()
+        cv2_img = cv2.resize(cv2_img, unit_size)
+        generated_imgs.append(cv2_img)
+
+
+    # generate image grid
     img_tile = [generated_imgs[i*cols:(i+1)*cols] for i in range(rows)]
     res = render_tile(img_tile)
 
-    cv2.imshow('overlay', res)
-    cv2.waitKey(0)
-    # if cv2.waitKey(0) & 0xFF == ord('q'):
-    #     break
-        #closing all open windows
-    cv2.destroyAllWindows()
+    # cv2.imshow('overlay', res)
+    # cv2.waitKey(0)
+    # # if cv2.waitKey(0) & 0xFF == ord('q'):
+    # #     break
+    #     #closing all open windows
+    # cv2.destroyAllWindows()
 
+    # write to file
     cv2.imwrite('../res/result.jpg', res)
