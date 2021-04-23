@@ -2,7 +2,7 @@
 # @Author: User
 # @Date:   2021-04-16 11:05:13
 # @Last Modified by:   fyr91
-# @Last Modified time: 2021-04-20 11:45:13
+# @Last Modified time: 2021-04-23 12:28:36
 import cv2
 from PIL import Image
 import os
@@ -75,9 +75,11 @@ while len(generated_imgs) < rows*cols:
 
     # check design existance
     design = []
+    design.append(body_type)
+    design.append(body_color)
     design.append(top_file)
     design.append(glasses_file)
-    design_str = ",".join(design)+f",{body_type},{body_color}"
+    design_str = ",".join(design)
     if (design_str in existing_designs):
         continue
     else:
@@ -92,6 +94,7 @@ while len(generated_imgs) < rows*cols:
     else:
         bg_color = random.choice(BG_COLORS)
     bg = Image.new('RGB', (600, 600), bg_color)
+    # bg = Image.new('RGB', (600, 600), (253, 249, 241))
     render.paste(bg, (0,0))
     body = Image.open(f'../assets/base/{body_type}/{body_color}.png')
     render.paste(body, (0,0), body)
@@ -126,5 +129,5 @@ res = render_tile(img_tile)
 # cv2.destroyAllWindows()
 
 # write to file
-cv2.imwrite('../res/result.jpg', res)
+cv2.imwrite('../res/result.png', res)
 print(f"\n{num_rare_items} rare items created")

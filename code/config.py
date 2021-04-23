@@ -2,7 +2,7 @@
 # @Author: fyr91
 # @Date:   2021-04-20 10:27:18
 # @Last Modified by:   fyr91
-# @Last Modified time: 2021-04-20 11:45:53
+# @Last Modified time: 2021-04-20 12:05:12
 
 # Directory config
 BASE_DIR = '../assets/base/' # dir for base
@@ -14,7 +14,7 @@ GLASSES_DIR = '../assets/glasses/' # dir for glasses
 TOP_PROB = 0.5
 HAIR_PROB = 0
 GLASSES_PROB = 0.2
-RARE_PROB = 0.01
+RARE_PROB = 0.03
 
 # BG color palette
 BG_COLORS = [(155, 93, 229), (241, 91, 181), (0, 187, 249), (0, 245, 212)]
