@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # @Author: User
 # @Date:   2021-04-16 11:05:13
-# @Last Modified by:   fyr91
-# @Last Modified time: 2021-04-25 19:15:31
+# @Last Modified by:   yirui
+# @Last Modified time: 2021-12-14 15:54:16
 import cv2
 from PIL import Image
 import os
@@ -24,15 +24,15 @@ normal_glasses, rare_glasses = split_nr(glasses)
 normal_hands, rare_hands = split_nr(hands)
 
 rows = 20
-cols = 40
-unit_size = (120, 120)
+cols = 30
+unit_size = (148, 148)
 generated_imgs = []
 
 while len(generated_imgs) < rows * cols:
 
     # init and create empty final render
     got_rare = False
-    render = Image.new('RGB', (600, 600))
+    render = Image.new('RGB', (592, 592))
 
     # select body type & color
     body_type = random.choice(BODY_TYPES)
@@ -112,12 +112,30 @@ while len(generated_imgs) < rows * cols:
         print(f'generated {len(existing_designs)}/{rows*cols} unique designs', end="\r", flush=True)
 
     # render
+    # if got_rare:
+    #     num_rare_items += 1
+    #     bg_color = RARE_BG
+    # else:
+    #     bg_color = random.choice(BG_COLORS)
+    # bg = Image.new('RGB', (592, 592), bg_color)
+
+    # if got_rare:
+    #     num_rare_items += 1
+    #     bg_file = RARE_BG_FILE
+    # else:
+    #     bg_file = random.choice(BG_FILES)
+    # bg = Image.open(f'../assets/bg/{bg_file}')
+
+    # render
     if got_rare:
         num_rare_items += 1
-        bg_color = RARE_BG
+        bg_file = RARE_BG_FILE
+        bg = Image.open(f'../assets/bg/{bg_file}')
+
     else:
         bg_color = random.choice(BG_COLORS)
-    bg = Image.new('RGB', (600, 600), bg_color)
+        bg = Image.new('RGB', (592, 592), bg_color)
+
     # bg = Image.new('RGB', (600, 600), (253, 249, 241))
     render.paste(bg, (0, 0))
     body = Image.open(f'../assets/base/{body_type}/{body_color}.png')
