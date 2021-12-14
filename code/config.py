@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # @Author: fyr91
 # @Date:   2021-04-20 10:27:18
-# @Last Modified by:   yirui
-# @Last Modified time: 2021-12-14 17:14:29
+# @Last Modified by:   fyr91
+# @Last Modified time: 2021-12-14 21:15:25
 
 # Directory config
 BASE_DIR = '../assets/base/'  # dir for base
@@ -32,29 +32,33 @@ BODY_TYPES = ['pd_01', 'pd_02', 'pd_03', 'pd_04']
 #             (219, 231, 228), (240, 239, 235), (214, 226, 233), (188, 212, 230), (153, 193, 222)]
 
 OFFSET = {
+    # normal
     "pd_01": {
-        "hair": [0, 176],
+        # "hair": [0, 176],
         "glasses": [0, 224],
         "top": [0, 80],
         "right_hand": [-88, 320],
         "left_hand": [88, 320]
     },
+    # fat
     "pd_02": {
-        "hair": [0, 138],
+        # "hair": [0, 138],
         "glasses": [0, 192],
         "top": [0, 32],
         "right_hand": [-168, 288],
         "left_hand": [168, 288]
     },
+    # tiny
     "pd_03": {
-        "hair": [0, 272],
+        # "hair": [0, 272],
         "glasses": [0, 320],
         "top": [0, 176],
         "right_hand": [-24, 368],
         "left_hand": [24, 368]
     },
+    # tall
     "pd_04": {
-        "hair": [0, 82],
+        # "hair": [0, 82],
         "glasses": [0, 144],
         "top": [0, 0],
         "right_hand": [-88, 256],
