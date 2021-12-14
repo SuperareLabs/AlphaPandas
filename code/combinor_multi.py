@@ -2,7 +2,7 @@
 # @Author: User
 # @Date:   2021-04-16 11:05:13
 # @Last Modified by:   yirui
-# @Last Modified time: 2021-12-14 15:54:16
+# @Last Modified time: 2021-12-14 18:09:30
 import cv2
 from PIL import Image
 import os
@@ -13,6 +13,10 @@ from render_utils import *
 from config import *
 
 num_rare_items = 0
+num_rare1 = 0
+num_rare2 = 0
+num_rare3 = 0
+num_normal = 0
 existing_designs = []
 
 _, _, tops = next(os.walk(TOP_DIR))
@@ -24,7 +28,7 @@ normal_glasses, rare_glasses = split_nr(glasses)
 normal_hands, rare_hands = split_nr(hands)
 
 rows = 20
-cols = 30
+cols = 40
 unit_size = (148, 148)
 generated_imgs = []
 
@@ -57,9 +61,12 @@ while len(generated_imgs) < rows * cols:
     got_right_hand = random.random() < RIGHT_HAND_PROB
     got_left_hand = random.random() < LEFT_HAND_PROB
 
+    rare_number = 0
+
     if got_top:
         if random.random() < RARE_PROB:
             got_rare = True
+            rare_number += 1
             top_file = random.choice(rare_tops)
         else:
             top_file = random.choice(normal_tops)
@@ -69,6 +76,7 @@ while len(generated_imgs) < rows * cols:
     if got_glasses:
         if random.random() < RARE_PROB:
             got_rare = True
+            rare_number += 1
             glasses_file = random.choice(rare_glasses)
         else:
             glasses_file = random.choice(normal_glasses)
@@ -78,6 +86,7 @@ while len(generated_imgs) < rows * cols:
     if got_right_hand:
         if random.random() < RARE_PROB:
             got_rare = True
+            rare_number += 1
             right_hand_file = random.choice(rare_hands)
         else:
             right_hand_file = random.choice(normal_hands)
@@ -87,6 +96,7 @@ while len(generated_imgs) < rows * cols:
     if got_left_hand and not got_right_hand:
         if random.random() < RARE_PROB:
             got_rare = True
+            rare_number += 1
             left_hand_file = random.choice(rare_hands)
         else:
             left_hand_file = random.choice(normal_hands)
@@ -97,6 +107,11 @@ while len(generated_imgs) < rows * cols:
         left_hand_file = ''
 
     # check design existance
+
+    if rare_number == 3:
+        # change body color to gold if super rare
+        body_color = "gold"
+
     design = []
     design.append(body_type)
     design.append(body_color)
@@ -128,11 +143,17 @@ while len(generated_imgs) < rows * cols:
 
     # render
     if got_rare:
-        num_rare_items += 1
-        bg_file = RARE_BG_FILE
+        # num_rare_items += 1
+        if rare_number == 1:
+            num_rare1 += 1
+        elif rare_number == 2:
+            num_rare2 += 1
+        else:
+            num_rare3 += 1
+        bg_file = RARE_BG_FILES[rare_number-1]
         bg = Image.open(f'../assets/bg/{bg_file}')
-
     else:
+        num_normal += 1
         bg_color = random.choice(BG_COLORS)
         bg = Image.new('RGB', (592, 592), bg_color)
 
@@ -182,4 +203,11 @@ res = render_tile(img_tile)
 
 # write to file
 cv2.imwrite('../res/result_test.png', res)
-print(f"\n{num_rare_items} rare items created")
+# print(f"\n{num_rare_items} rare items created")
+print(f"""
+Summary:\n
+  {num_normal} normal pandas generated\n
+  {num_rare1} rare level 1 pandas generated\n
+  {num_rare2} rare level 2 pandas generated\n
+  {num_rare3} rare level 3 pandas generated\n
+    """)
