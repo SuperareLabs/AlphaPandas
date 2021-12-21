@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # @Author: User
 # @Date:   2021-04-16 11:05:13
-# @Last Modified by:   yirui
-# @Last Modified time: 2021-12-14 18:09:30
+# @Last Modified by:   fyr91
+# @Last Modified time: 2021-12-22 00:50:12
 import cv2
 from PIL import Image
 import os
@@ -41,19 +41,21 @@ while len(generated_imgs) < rows * cols:
     # select body type & color
     body_type = random.choice(BODY_TYPES)
     # body_type = 'pd_04'
-    body_color_prob = random.random()
-    if body_color_prob > 0 and body_color_prob <= 0.1:
-        body_color = 'blue'
-    elif body_color_prob <= 0.2:
-        body_color = 'red'
-    elif body_color_prob <= 0.3:
-        body_color = 'green'
-    elif body_color_prob <= 0.4:
-        body_color = 'purple'
-    elif body_color_prob <= 0.5:
-        body_color = 'brown'
-    else:
-        body_color = 'black'
+    # body_color_prob = random.random()
+    # if body_color_prob > 0 and body_color_prob <= 0.1:
+    #     body_color = 'blue'
+    # elif body_color_prob <= 0.2:
+    #     body_color = 'red'
+    # elif body_color_prob <= 0.3:
+    #     body_color = 'green'
+    # elif body_color_prob <= 0.4:
+    #     body_color = 'purple'
+    # elif body_color_prob <= 0.5:
+    #     body_color = 'brown'
+    # else:
+    #     body_color = 'black'
+
+    body_color = "black"
 
     # determine accessories
     got_top = random.random() < TOP_PROB
@@ -106,12 +108,6 @@ while len(generated_imgs) < rows * cols:
     else:
         left_hand_file = ''
 
-    # check design existance
-
-    if rare_number == 3:
-        # change body color to gold if super rare
-        body_color = "gold"
-
     design = []
     design.append(body_type)
     design.append(body_color)
@@ -120,44 +116,35 @@ while len(generated_imgs) < rows * cols:
     design.append(right_hand_file)
     design.append(left_hand_file)
     design_str = ",".join(design)
-    if (design_str in existing_designs):
+    if (design_str in existing_designs) or "disabled" in design:
         continue
     else:
         existing_designs.append(design_str)
         print(f'generated {len(existing_designs)}/{rows*cols} unique designs', end="\r", flush=True)
 
-    # render
-    # if got_rare:
-    #     num_rare_items += 1
-    #     bg_color = RARE_BG
-    # else:
-    #     bg_color = random.choice(BG_COLORS)
-    # bg = Image.new('RGB', (592, 592), bg_color)
+    # select bg files
+    bg_file = random.choice(BG_FILES)
 
-    # if got_rare:
-    #     num_rare_items += 1
-    #     bg_file = RARE_BG_FILE
-    # else:
-    #     bg_file = random.choice(BG_FILES)
-    # bg = Image.open(f'../assets/bg/{bg_file}')
-
-    # render
-    if got_rare:
-        # num_rare_items += 1
-        if rare_number == 1:
-            num_rare1 += 1
-        elif rare_number == 2:
-            num_rare2 += 1
-        else:
-            num_rare3 += 1
-        bg_file = RARE_BG_FILES[rare_number-1]
-        bg = Image.open(f'../assets/bg/{bg_file}')
+    # change body color if got rare
+    # change bg if got rare
+    if rare_number == 3:
+        body_color = "gold"
+        bg_file = RARE_BG_FILES[2]
+        num_rare3 += 1
+    elif rare_number == 2:
+        body_color = "silver"
+        bg_file = RARE_BG_FILES[1]
+        num_rare2 += 1
+    elif rare_number == 1:
+        body_color = "bronze"
+        bg_file = RARE_BG_FILES[0]
+        num_rare1 += 1
     else:
+        body_color = "black"
         num_normal += 1
-        bg_color = random.choice(BG_COLORS)
-        bg = Image.new('RGB', (592, 592), bg_color)
 
-    # bg = Image.new('RGB', (600, 600), (253, 249, 241))
+    bg = Image.open(f'../assets/bg/{bg_file}')
+
     render.paste(bg, (0, 0))
     body = Image.open(f'../assets/base/{body_type}/{body_color}.png')
     render.paste(body, (0, 0), body)

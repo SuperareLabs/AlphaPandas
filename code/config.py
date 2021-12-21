@@ -2,7 +2,7 @@
 # @Author: fyr91
 # @Date:   2021-04-20 10:27:18
 # @Last Modified by:   fyr91
-# @Last Modified time: 2021-12-14 21:15:25
+# @Last Modified time: 2021-12-22 00:50:59
 
 # Directory config
 BASE_DIR = '../assets/base/'  # dir for base
@@ -24,8 +24,8 @@ BG_COLORS = [(155, 93, 229), (241, 91, 181), (0, 187, 249), (0, 245, 212)]
 RARE_BG = (254, 228, 64)
 # BG_FILES = ["blue_blue.jpg", "green_green.jpg", "pink_orange.jpg", "purple_blue.jpg"]
 # RARE_BG_FILE = "yellow_red.jpg"
-BG_FILES = ["glass_blue.jpg", "glass_green.jpg", "glass_purple.jpg", "glass_pink.jpg"]
-RARE_BG_FILES = ["red_yellow.jpg", "rare1.jpg", "rare2.jpg"]
+BG_FILES = ["cp1_0.png", "cp1_1.png", "cp1_2.png"]
+RARE_BG_FILES = ["rare1.png", "rare2.png", "rare3.png"]
 BODY_TYPES = ['pd_01', 'pd_02', 'pd_03', 'pd_04']
 # BG_COLOR = [(255,255,255)]
 # BG_COLOR = [(237, 220, 210), (255, 241, 230), (253, 226, 228), (250, 210, 225), (197, 222, 221),
