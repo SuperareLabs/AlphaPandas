@@ -2,7 +2,7 @@
 # @Author: User
 # @Date:   2021-04-16 11:05:13
 # @Last Modified by:   yirui
-# @Last Modified time: 2021-12-22 12:13:47
+# @Last Modified time: 2021-12-22 18:18:36
 import cv2
 from PIL import Image
 import os
@@ -21,6 +21,11 @@ num_rare2 = 0
 num_rare3 = 0
 num_normal = 0
 existing_designs = []
+super_rares = [
+    'pd_01,gold,demon_horns_gold_rare.png,gls_stylish_green_rare.png,bitcoin_rare.png',
+    'pd_02,gold,flowerhat_rainbow_rare.png,gls_futuristic_purple_rare.png,windmill_colorful_rare.png',
+    'pd_03,gold,crown_special_rare.png,gls_stylish_yellow_rare.png,handbag_pink_rare.png',
+    'pd_04,gold,octopus_hat_red_rare.png,gls_butterfly_rare.png,skeleton_head_gray_rare.png']
 
 _, _, heads = next(os.walk(HEADS_DIR))
 _, _, glasses = next(os.walk(GLASSES_DIR))
@@ -79,7 +84,6 @@ while len(generated_imgs) < rows * cols:
 
     body_color = "black"
 
-    # determine accessories
     got_head = random.random() < HEAD_PROB
     got_glasses = random.random() < GLASSES_PROB
     got_right_hand = random.random() < RIGHT_HAND_PROB
@@ -89,7 +93,6 @@ while len(generated_imgs) < rows * cols:
 
     if got_head:
         if random.random() < RARE_PROB:
-            got_rare = True
             rare_number += 1
             head_file = random.choice(rare_heads)
         else:
@@ -99,7 +102,6 @@ while len(generated_imgs) < rows * cols:
 
     if got_glasses:
         if random.random() < RARE_PROB:
-            got_rare = True
             rare_number += 1
             glasses_file = random.choice(rare_glasses)
         else:
@@ -109,7 +111,6 @@ while len(generated_imgs) < rows * cols:
 
     if got_right_hand:
         if random.random() < RARE_PROB:
-            got_rare = True
             rare_number += 1
             right_hand_file = random.choice(rare_hands)
         else:
@@ -119,7 +120,6 @@ while len(generated_imgs) < rows * cols:
 
     if got_left_hand and not got_right_hand:
         if random.random() < RARE_PROB:
-            got_rare = True
             rare_number += 1
             left_hand_file = random.choice(rare_hands)
         else:
@@ -143,32 +143,8 @@ while len(generated_imgs) < rows * cols:
     design.append(in_hand)
     design_str = ",".join(design)
 
-    # accept or reject design
-    # not duplicated
-    # not disabled
-    if (design_str in existing_designs) or "disabled" in design_str:
-        continue
-    else:
-        existing_designs.append(design_str)
-        try:
-            summary["heads"][head_file] += 1
-        except:
-            pass
-        try:
-            summary["glasses"][glasses_file] += 1
-        except:
-            pass
-        try:
-            summary["hand accessories"][in_hand] += 1
-        except:
-            pass
-        print(f'generated {len(existing_designs)}/{rows*cols} unique designs', end="\r", flush=True)
-
-    # select bg files
-    bg_file = random.choice(BG_FILES)
-
     # change body color if got rare
-    # change bg if got rare
+    # assign bg
     if rare_number == 3:
         body_color = "gold"
         bg_file = RARE_BG_FILES[2]
@@ -183,7 +159,34 @@ while len(generated_imgs) < rows * cols:
         num_rare1 += 1
     else:
         body_color = "black"
+        bg_file = random.choice(BG_FILES)
         num_normal += 1
+
+    # accept or reject design
+    # not duplicated
+    # not disabled
+    if (design_str in existing_designs) or "disabled" in design_str:
+        continue
+    else:
+        existing_designs.append(design_str)
+        if rare_number == 3:
+            print("super rare info:")
+            print(f"  {len(existing_designs)}")
+            print(f"  {existing_designs[-1]}")
+        try:
+            summary["heads"][head_file] += 1
+        except:
+            pass
+        try:
+            summary["glasses"][glasses_file] += 1
+        except:
+            pass
+        try:
+            summary["hand accessories"][in_hand] += 1
+        except:
+            pass
+        print(f'generated {len(existing_designs)}/{rows*cols} unique designs', end="\r", flush=True)
+
 
     bg = Image.open(f'../assets/bg/{bg_file}')
 
@@ -240,6 +243,9 @@ res = render_tile(img_tile)
 # write to file
 cv2.imwrite('../res/overview.png', res)
 
+with open('../res/designs.txt', 'w') as f:
+    for item in existing_designs:
+        f.write(f"{item}\n")
 
 # print(f"\n{num_rare_items} rare items created")
 print(f"""

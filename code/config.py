@@ -2,7 +2,7 @@
 # @Author: fyr91
 # @Date:   2021-04-20 10:27:18
 # @Last Modified by:   yirui
-# @Last Modified time: 2021-12-22 12:13:56
+# @Last Modified time: 2021-12-22 13:47:21
 
 # Directory config
 BASE_DIR = '../assets/base/'  # dir for base
@@ -31,8 +31,8 @@ BODY_TYPES = ['pd_01', 'pd_02', 'pd_03', 'pd_04']
 # BG_COLOR = [(237, 220, 210), (255, 241, 230), (253, 226, 228), (250, 210, 225), (197, 222, 221),
 #             (219, 231, 228), (240, 239, 235), (214, 226, 233), (188, 212, 230), (153, 193, 222)]
 
-COLS = 40
-ROWS = 20
+COLS = 50
+ROWS = 30
 OVERVIEW_UNIT_SIZE = (148,148)
 
 OFFSET = {

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # @Author: fyr91
 # @Date:   2021-04-20 11:20:46
-# @Last Modified by:   fyr91
-# @Last Modified time: 2021-04-20 11:29:44
+# @Last Modified by:   yirui
+# @Last Modified time: 2021-12-22 12:24:59
 import cv2
 
 
@@ -24,7 +24,7 @@ def split_nr(files):
     norms = []
     rares = []
     for f in files:
-        if 'rare' in f:
+        if '_rare' in f:
             rares.append(f)
         else:
             norms.append(f)
