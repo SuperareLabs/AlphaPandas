@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # @Author: User
 # @Date:   2021-04-16 11:05:13
-# @Last Modified by:   fyr91
-# @Last Modified time: 2021-12-22 00:50:12
+# @Last Modified by:   yirui
+# @Last Modified time: 2021-12-22 12:13:47
 import cv2
 from PIL import Image
 import os
@@ -11,6 +11,9 @@ import numpy as np
 import random
 from render_utils import *
 from config import *
+import pprint
+
+x = 0
 
 num_rare_items = 0
 num_rare1 = 0
@@ -19,17 +22,36 @@ num_rare3 = 0
 num_normal = 0
 existing_designs = []
 
-_, _, tops = next(os.walk(TOP_DIR))
+_, _, heads = next(os.walk(HEADS_DIR))
 _, _, glasses = next(os.walk(GLASSES_DIR))
 _, _, hands = next(os.walk(HAND_DIR))
 
-normal_tops, rare_tops = split_nr(tops)
+normal_heads, rare_heads = split_nr(heads)
 normal_glasses, rare_glasses = split_nr(glasses)
 normal_hands, rare_hands = split_nr(hands)
 
-rows = 20
-cols = 40
-unit_size = (148, 148)
+summary = {
+    "heads": {},
+    "glasses": {},
+    "hand accessories": {}
+}
+
+for head in normal_heads:
+    summary["heads"][head] = 0
+for head in rare_heads:
+    summary["heads"][head] = 0
+for gls in normal_glasses:
+    summary["glasses"][gls] = 0
+for gls in rare_glasses:
+    summary["glasses"][gls] = 0
+for hand_acc in normal_hands:
+    summary["hand accessories"][hand_acc] = 0
+for hand_acc in rare_hands:
+    summary["hand accessories"][hand_acc] = 0
+
+rows = ROWS
+cols = COLS
+unit_size = OVERVIEW_UNIT_SIZE
 generated_imgs = []
 
 while len(generated_imgs) < rows * cols:
@@ -58,22 +80,22 @@ while len(generated_imgs) < rows * cols:
     body_color = "black"
 
     # determine accessories
-    got_top = random.random() < TOP_PROB
+    got_head = random.random() < HEAD_PROB
     got_glasses = random.random() < GLASSES_PROB
     got_right_hand = random.random() < RIGHT_HAND_PROB
     got_left_hand = random.random() < LEFT_HAND_PROB
 
     rare_number = 0
 
-    if got_top:
+    if got_head:
         if random.random() < RARE_PROB:
             got_rare = True
             rare_number += 1
-            top_file = random.choice(rare_tops)
+            head_file = random.choice(rare_heads)
         else:
-            top_file = random.choice(normal_tops)
+            head_file = random.choice(normal_heads)
     else:
-        top_file = ''
+        head_file = ''
 
     if got_glasses:
         if random.random() < RARE_PROB:
@@ -108,18 +130,38 @@ while len(generated_imgs) < rows * cols:
     else:
         left_hand_file = ''
 
+    in_hand = right_hand_file+left_hand_file
+
     design = []
     design.append(body_type)
     design.append(body_color)
-    design.append(top_file)
+    design.append(head_file)
     design.append(glasses_file)
-    design.append(right_hand_file)
-    design.append(left_hand_file)
+    # avoid flipped case
+    # design.append(right_hand_file)
+    # design.append(left_hand_file)
+    design.append(in_hand)
     design_str = ",".join(design)
-    if (design_str in existing_designs) or "disabled" in design:
+
+    # accept or reject design
+    # not duplicated
+    # not disabled
+    if (design_str in existing_designs) or "disabled" in design_str:
         continue
     else:
         existing_designs.append(design_str)
+        try:
+            summary["heads"][head_file] += 1
+        except:
+            pass
+        try:
+            summary["glasses"][glasses_file] += 1
+        except:
+            pass
+        try:
+            summary["hand accessories"][in_hand] += 1
+        except:
+            pass
         print(f'generated {len(existing_designs)}/{rows*cols} unique designs', end="\r", flush=True)
 
     # select bg files
@@ -148,15 +190,16 @@ while len(generated_imgs) < rows * cols:
     render.paste(bg, (0, 0))
     body = Image.open(f'../assets/base/{body_type}/{body_color}.png')
     render.paste(body, (0, 0), body)
-    if got_top:
-        top_path = osp.join(TOP_DIR, top_file)
-        accessory = Image.open(top_path)
-        x, y = get_top_left_coord(render, accessory, OFFSET[body_type]["top"][0], OFFSET[body_type]["top"][1])
-        render.paste(accessory, (x, y), accessory)
+    # seq: glasses < head < hand
     if got_glasses:
         glasses_path = osp.join(GLASSES_DIR, glasses_file)
         accessory = Image.open(glasses_path)
         x, y = get_top_left_coord(render, accessory, OFFSET[body_type]["glasses"][0], OFFSET[body_type]["glasses"][1])
+        render.paste(accessory, (x, y), accessory)
+    if got_head:
+        head_path = osp.join(HEADS_DIR, head_file)
+        accessory = Image.open(head_path)
+        x, y = get_top_left_coord(render, accessory, OFFSET[body_type]["head"][0], OFFSET[body_type]["head"][1])
         render.paste(accessory, (x, y), accessory)
     if got_right_hand and right_hand_file != '':
         right_hand_path = osp.join(HAND_DIR, right_hand_file)
@@ -170,11 +213,17 @@ while len(generated_imgs) < rows * cols:
         x, y = get_top_left_coord(render, accessory, OFFSET[body_type]["left_hand"][0], OFFSET[body_type]["left_hand"][1])
         render.paste(accessory, (x, y), accessory)
 
-    # cvt to cv2 and resize
+    # cvt to cv2
+    # write to file
+    # and resize for overview
     cv2_img = np.array(render)
     cv2_img = cv2_img[:, :, ::-1].copy()
+
+    cv2.imwrite(f"../res/individuals/#{len(existing_designs)}.png", cv2_img)
+
     cv2_img = cv2.resize(cv2_img, unit_size)
     generated_imgs.append(cv2_img)
+
 
 
 # generate image grid
@@ -189,7 +238,9 @@ res = render_tile(img_tile)
 # cv2.destroyAllWindows()
 
 # write to file
-cv2.imwrite('../res/result_test.png', res)
+cv2.imwrite('../res/overview.png', res)
+
+
 # print(f"\n{num_rare_items} rare items created")
 print(f"""
 Summary:\n
@@ -197,4 +248,8 @@ Summary:\n
   {num_rare1} rare level 1 pandas generated\n
   {num_rare2} rare level 2 pandas generated\n
   {num_rare3} rare level 3 pandas generated\n
+  Details:
     """)
+
+pp = pprint.PrettyPrinter(indent=1)
+pp.pprint(summary)
