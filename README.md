@@ -1,7 +1,7 @@
-# Cryptopandas-art
-Help create crypto pandas with specific rarety
+# AlphaPanda-art
+Chill in a panda world
 
-###### Yellow bg indicates rare item(s) inside
+##### Total 1500 pandas are created.
 
 ### Preview Result
-![cryptopandas](https://github.com/SuperareLabs/Cryptopandas-art/blob/main/res/result.png)
+![cryptopandas](https://github.com/SuperareLabs/Cryptopandas-art/blob/main/res/overview.png)
