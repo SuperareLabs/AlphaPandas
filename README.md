@@ -1,5 +1,5 @@
 # AlphaPanda-art
-Chill in a panda world
+Just chill in a panda world
 
 ##### Total 1500 pandas are created.
 
